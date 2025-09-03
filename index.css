@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  background-color: #0f172a; /* slate-900 */
+}
+
+body {
+  background-color: #0f172a; /* slate-900 */
+  font-family: 'Inter', sans-serif;
+  color: #e2e8f0; /* slate-200 */
+}
+
+/* --- Animations --- */
+@keyframes aurora-flow {
+    0%{background-position:0% 50%}
+    50%{background-position:100% 50%}
+    100%{background-position:0% 50%}
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.8s ease-out forwards;
+}
+
+@keyframes slide-in-bottom {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-in-bottom {
+  opacity: 0; /* Set initial state for staggered animation */
+  animation: slide-in-bottom 0.5s ease-out forwards;
+}
+
+.title-aurora {
+  background: linear-gradient(to right, #667eea, #764ba2, #f32170, #ff6b08, #cf23cf, #eedd44);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: aurora-flow 10s ease infinite;
+  background-size: 400% 400%;
+}
