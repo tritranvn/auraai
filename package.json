@@ -1,22 +1,14 @@
 {
-  "name": "nano-banana-ai-photo-editor",
+  "name": "aura-ai-serverless-backend",
+  "version": "1.0.0",
   "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
+  "description": "Backend function for Aura AI to securely call the Gemini API.",
   "dependencies": {
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
-    "vite": "^7.1.4",
-    "@vitejs/plugin-react": "^5.0.2"
+    "@google/genai": "^0.15.0"
   },
   "devDependencies": {
-    "@types/node": "^22.14.0",
-    "typescript": "~5.8.2",
-    "vite": "^6.2.0"
+    "@types/node": "^20.11.24",
+    "@vercel/node": "^3.2.0",
+    "typescript": "^5.3.3"
   }
 }
