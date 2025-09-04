@@ -1,57 +1,86 @@
+
+import { GoogleGenAI, Modality } from "@google/genai";
 import type { EditedImageResult } from '../types';
 
-// Helper to convert a file to a base64 string
-const fileToBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
+const fileToGenerativePart = async (file: File) => {
+  const base64EncodedDataPromise = new Promise<string>((resolve) => {
     const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => {
-        if (typeof reader.result === 'string') {
-            // Get the part after 'base64,'
-            resolve(reader.result.split(',')[1]);
-        } else {
-            reject(new Error('Failed to convert file to base64.'));
-        }
+    reader.onloadend = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result.split(',')[1]);
+      } else {
+        resolve(''); // Should not happen with readAsDataURL
+      }
     };
-    reader.onerror = error => reject(error);
+    reader.readAsDataURL(file);
   });
+  
+  const base64EncodedData = await base64EncodedDataPromise;
+  
+  return {
+    inlineData: {
+      data: base64EncodedData,
+      mimeType: file.type,
+    },
+  };
 };
 
 export const editImageWithGemini = async (imageFile: File, prompt: string): Promise<EditedImageResult> => {
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
+    // This error indicates a server-side configuration problem.
+    throw new Error("error_env_var_not_set");
+  }
+  
   try {
-    const imageBase64 = await fileToBase64(imageFile);
+    const ai = new GoogleGenAI({ apiKey });
 
-    const response = await fetch('/api/generate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const imagePart = await fileToGenerativePart(imageFile);
+    const textPart = { text: prompt };
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash-image-preview',
+      contents: {
+        parts: [imagePart, textPart],
       },
-      body: JSON.stringify({
-        prompt,
-        imageBase64,
-        mimeType: imageFile.type,
-      }),
+      config: {
+        responseModalities: [Modality.IMAGE, Modality.TEXT],
+      },
     });
 
-    const result = await response.json();
+    if (!response.candidates || response.candidates.length === 0) {
+      throw new Error("error_no_candidates");
+    }
 
-    if (!response.ok) {
-        // Map specific backend errors to translation keys for the UI.
-        if (result.error?.includes('configuration error')) {
-            throw new Error('error_env_var_not_set');
+    const candidate = response.candidates[0];
+    let imageUrl: string | null = null;
+    let text: string | null = null;
+
+    if (candidate?.content?.parts) {
+        for (const part of candidate.content.parts) {
+          if (part.inlineData) {
+            const base64ImageBytes = part.inlineData.data;
+            imageUrl = `data:${part.inlineData.mimeType};base64,${base64ImageBytes}`;
+          } else if (part.text) {
+            text = part.text;
+          }
         }
-        throw new Error('error_gemini_communication');
+    } else {
+        // This handles cases where the response was blocked or is otherwise empty.
+        throw new Error("error_no_candidates");
     }
-    
-    // The serverless function now returns data in the exact format the app needs.
-    return result as EditedImageResult;
 
-  } catch (error) {
-    console.error("Error in editImageWithGemini:", error);
-    // Re-throw the error so the UI component can catch it and display a translated message.
-    if (error instanceof Error) {
-        throw error;
+    if (!imageUrl) {
+      throw new Error("error_no_image_in_response");
     }
-    throw new Error("error_unknown");
+
+    return { imageUrl, text };
+  } catch (error) {
+    console.error("Error editing image with Gemini:", error);
+    if (error instanceof Error && (error.message === 'error_no_candidates' || error.message === 'error_no_image_in_response' || error.message === 'error_env_var_not_set')) {
+        throw error; // Re-throw custom error keys
+    }
+    // A more generic error for API communication issues, which can include invalid API keys.
+    throw new Error("error_gemini_communication");
   }
 };
