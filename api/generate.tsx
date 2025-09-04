@@ -5,8 +5,8 @@
 // Vercel will correctly interpret this as a serverless function.
 
 interface GeminiResponsePart {
-  inlineData?: {
-    mimeType: string;
+  inline_data?: {
+    mime_type: string;
     data: string;
   };
   text?: string;
@@ -32,17 +32,17 @@ export default async function handler(req: any, res: any) {
       return res.status(400).json({ error: 'Missing required fields: prompt, imageBase64, mimeType' });
     }
     
-    // Correct request body for the gemini-2.5-flash-image-preview model
+    // Correct request body for the gemini-2.5-flash-image-preview model using snake_case
     const geminiRequestBody = {
       contents: [{
         parts: [
-          { inlineData: { mimeType: mimeType, data: imageBase64 } }, // Use camelCase
+          { inline_data: { mime_type: mimeType, data: imageBase64 } }, // Use snake_case
           { text: prompt }
         ]
       }],
       // This config is required for the image model to return an image
-      generationConfig: {
-        responseModalities: ["IMAGE", "TEXT"]
+      generation_config: {
+        response_modalities: ["IMAGE", "TEXT"]
       }
     };
 
@@ -74,8 +74,8 @@ export default async function handler(req: any, res: any) {
 
     if (candidate?.content?.parts) {
       for (const part of candidate.content.parts as GeminiResponsePart[]) {
-        if (part.inlineData) {
-          imageUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+        if (part.inline_data) { // Use snake_case
+          imageUrl = `data:${part.inline_data.mime_type};base64,${part.inline_data.data}`;
         } else if (part.text) {
           text = part.text;
         }
