@@ -1,8 +1,7 @@
 import { GoogleGenAI, Modality } from "@google/genai";
 import type { EditedImageResult } from '../types';
 
-// Fix: Per coding guidelines, the API key must be obtained exclusively from `process.env.API_KEY`.
-// This also resolves the TypeScript error "Property 'env' does not exist on type 'ImportMeta'".
+// FIX: Switched from import.meta.env.VITE_API_KEY to process.env.API_KEY to align with coding guidelines and fix the TypeScript error.
 const apiKey = process.env.API_KEY;
 
 if (!apiKey) {
