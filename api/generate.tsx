@@ -32,13 +32,18 @@ export default async function handler(req: any, res: any) {
       return res.status(400).json({ error: 'Missing required fields: prompt, imageBase64, mimeType' });
     }
     
+    // Correct request body for the gemini-2.5-flash-image-preview model
     const geminiRequestBody = {
       contents: [{
         parts: [
-          { inline_data: { mime_type: mimeType, data: imageBase64 } },
+          { inlineData: { mimeType: mimeType, data: imageBase64 } }, // Use camelCase
           { text: prompt }
         ]
-      }]
+      }],
+      // This config is required for the image model to return an image
+      generationConfig: {
+        responseModalities: ["IMAGE", "TEXT"]
+      }
     };
 
     const geminiResponse = await fetch(
@@ -51,13 +56,12 @@ export default async function handler(req: any, res: any) {
       }
     );
 
-    if (!geminiResponse.ok) {
-      const errorText = await geminiResponse.text();
-      console.error('Google Gemini API Error:', errorText);
-      return res.status(geminiResponse.status).json({ error: 'Failed to communicate with the AI model.' });
-    }
-
     const data = await geminiResponse.json();
+
+    if (!geminiResponse.ok) {
+      console.error('Google Gemini API Error:', data);
+      return res.status(geminiResponse.status).json({ error: `Failed to communicate with the AI model. Details: ${data?.error?.message || 'Unknown error'}` });
+    }
 
     if (!data.candidates || data.candidates.length === 0) {
       console.error('No candidates in Gemini response:', data);
