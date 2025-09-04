@@ -1,8 +1,5 @@
 // This file should be placed in the `api` directory at the root of your project.
-
-// Using `any` for req/res types to avoid needing `@vercel/node` dependency
-// in this simple project setup.
-// Vercel will correctly interpret this as a serverless function.
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 interface GeminiResponsePart {
   inlineData?: {
@@ -12,10 +9,10 @@ interface GeminiResponsePart {
   text?: string;
 }
 
-export default async function handler(req: any, res: any) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST']);
-    return res.status(405).end(`Method ${req.method} Not Allowed`);
+    return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
   }
 
   const apiKey = process.env.API_KEY;
@@ -60,7 +57,14 @@ export default async function handler(req: any, res: any) {
     if (!geminiResponse.ok) {
       const errorText = await geminiResponse.text();
       console.error('Google Gemini API Error:', errorText);
-      return res.status(geminiResponse.status).json({ error: 'Failed to communicate with the AI model.' });
+      try {
+        // Try to parse the error from Google, it's often JSON
+        const errorJson = JSON.parse(errorText);
+        return res.status(geminiResponse.status).json({ error: 'Failed to communicate with the AI model.', details: errorJson });
+      } catch (e) {
+        // If it's not JSON, return the raw text
+        return res.status(geminiResponse.status).json({ error: 'Failed to communicate with the AI model.', details: errorText });
+      }
     }
 
     const data = await geminiResponse.json();
@@ -93,6 +97,7 @@ export default async function handler(req: any, res: any) {
     res.status(200).json({ imageUrl, text });
   } catch (error) {
     console.error('Error in /api/generate route:', error);
-    res.status(500).json({ error: 'An internal server error occurred.' });
+    const message = error instanceof Error ? error.message : 'An unknown error occurred';
+    res.status(500).json({ error: 'An internal server error occurred.', details: message });
   }
 }
