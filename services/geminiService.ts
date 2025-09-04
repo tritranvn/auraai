@@ -1,14 +1,6 @@
+
 import { GoogleGenAI, Modality } from "@google/genai";
 import type { EditedImageResult } from '../types';
-
-// Fix: Use process.env.API_KEY as mandated by the coding guidelines. This resolves the error on import.meta.env.
-const apiKey = process.env.API_KEY;
-
-if (!apiKey) {
-  throw new Error("API_KEY environment variable is not set.");
-}
-
-const ai = new GoogleGenAI({ apiKey });
 
 const fileToGenerativePart = async (file: File) => {
   const base64EncodedDataPromise = new Promise<string>((resolve) => {
@@ -34,7 +26,15 @@ const fileToGenerativePart = async (file: File) => {
 };
 
 export const editImageWithGemini = async (imageFile: File, prompt: string): Promise<EditedImageResult> => {
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
+    // This error indicates a server-side configuration problem.
+    throw new Error("error_env_var_not_set");
+  }
+  
   try {
+    const ai = new GoogleGenAI({ apiKey });
+
     const imagePart = await fileToGenerativePart(imageFile);
     const textPart = { text: prompt };
 
@@ -77,9 +77,10 @@ export const editImageWithGemini = async (imageFile: File, prompt: string): Prom
     return { imageUrl, text };
   } catch (error) {
     console.error("Error editing image with Gemini:", error);
-    if (error instanceof Error && (error.message === 'error_no_candidates' || error.message === 'error_no_image_in_response')) {
+    if (error instanceof Error && (error.message === 'error_no_candidates' || error.message === 'error_no_image_in_response' || error.message === 'error_env_var_not_set')) {
         throw error; // Re-throw custom error keys
     }
+    // A more generic error for API communication issues, which can include invalid API keys.
     throw new Error("error_gemini_communication");
   }
 };

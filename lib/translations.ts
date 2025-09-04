@@ -1,3 +1,4 @@
+
 export const translations = {
   en: {
     mainTitle: "Aura Ai",
@@ -79,7 +80,8 @@ export const translations = {
     error_unknown: "An unknown error occurred during photo generation.",
     error_no_candidates: "The AI did not return any potential images. Please try again.",
     error_no_image_in_response: "The AI response did not contain an image. Please try again.",
-    error_gemini_communication: "Failed to communicate with the AI model. Please check your connection or try again later.",
+    error_gemini_communication: "Failed to communicate with the AI model. Your API Key might be invalid or there could be a network issue.",
+    error_env_var_not_set: "Application configuration error: The API key has not been set up correctly by the hosting provider.",
     changeImageButton: "Change Image",
     uploadPreviewAlt: "Your uploaded image",
     originalImageLabel: "Original Image",
@@ -166,7 +168,8 @@ export const translations = {
     error_unknown: "Đã xảy ra lỗi không xác định trong quá trình tạo ảnh.",
     error_no_candidates: "AI không trả về bất kỳ hình ảnh nào. Vui lòng thử lại.",
     error_no_image_in_response: "Phản hồi của AI không chứa hình ảnh. Vui lòng thử lại.",
-    error_gemini_communication: "Không thể kết nối với mô hình AI. Vui lòng kiểm tra kết nối của bạn hoặc thử lại sau.",
+    error_gemini_communication: "Không thể kết nối với mô hình AI. Khóa API của bạn có thể không hợp lệ hoặc đã có sự cố mạng.",
+    error_env_var_not_set: "Lỗi cấu hình ứng dụng: Khóa API chưa được thiết lập chính xác bởi nhà cung cấp dịch vụ lưu trữ.",
     changeImageButton: "Đổi Ảnh",
     uploadPreviewAlt: "Ảnh đã tải lên của bạn",
     originalImageLabel: "Ảnh Gốc",

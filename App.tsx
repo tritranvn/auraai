@@ -90,18 +90,11 @@ const App: React.FC = () => {
     ]
   }), [t]);
 
-  const handleStartOver = () => {
-    if (originalImageUrl) {
-      URL.revokeObjectURL(originalImageUrl);
-    }
-    setOriginalImageFile(null);
-    setOriginalImageUrl(null);
+  const handleBackToCustomize = () => {
     setGeneratedImages([]);
-    setSelectedStyles([]);
-    setCustomPrompt('');
     setError(null);
     setIsLoading(false);
-    setView('upload');
+    setView('customize');
   };
 
   const handleImageUpload = (file: File) => {
@@ -201,7 +194,7 @@ const App: React.FC = () => {
     link.click();
     document.body.removeChild(link);
   };
-
+  
   const generationCount = selectedStyles.length + (customPrompt.trim() ? 1 : 0);
   const displayCount = generationCount === 0 ? 1 : generationCount;
 
@@ -300,103 +293,98 @@ const App: React.FC = () => {
                           className="animate-slide-in-bottom"
                           style={{ animationDelay: `${Object.keys(PHOTOSHOOT_STYLES).length * 100}ms` }}
                       >
-                          <h3 className="font-bold text-lg mb-3 mt-6 text-slate-300">{t('customPromptTitle')}</h3>
-                           <textarea
+                          <h3 className="font-bold text-lg mb-3 text-slate-300 border-b border-slate-700 pb-2">{t('customPromptTitle')}</h3>
+                          <textarea
                               value={customPrompt}
                               onChange={(e) => setCustomPrompt(e.target.value)}
                               placeholder={t('customPromptPlaceholder')}
-                              disabled={isLoading || !originalImageFile}
-                              rows={4}
-                              className="w-full bg-slate-700 border border-slate-600 rounded-lg p-3 text-slate-200 placeholder-slate-400 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                            />
+                              className="w-full h-24 bg-slate-700 border border-slate-600 rounded-md p-3 text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                              aria-label={t('customPromptTitle')}
+                          />
                       </div>
-                  </div>
-
-                  {error && (
-                    <div className="mt-4">
-                      <div className="bg-red-900/40 border border-red-700 text-red-200 px-4 py-3 rounded-lg relative" role="alert">
-                        <strong className="font-bold text-red-100">{t('errorPrefix')}</strong>
-                        <span className="block sm:inline">{error}</span>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="mt-8 pt-6 border-t border-slate-700">
-                      <button
-                          onClick={handleGenerate}
-                          disabled={isLoading || !originalImageFile}
-                          className="w-full bg-[#D4AF37] hover:bg-amber-500 disabled:bg-slate-600 disabled:text-slate-400 disabled:cursor-not-allowed text-black font-bold py-3 px-4 rounded-md transition-all duration-300 text-lg uppercase tracking-wider"
-                      >
-                          {isLoading ? t('generatingButton') : `${t('generateButton')} (${displayCount})`}
-                      </button>
                   </div>
               </div>
+
+              {/* Action Button */}
+              <div className="mt-8 pt-6 border-t border-slate-700 flex flex-col items-center">
+                  <button
+                      onClick={handleGenerate}
+                      disabled={isLoading || !originalImageFile || (generationCount === 0)}
+                      className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 ease-in-out transform hover:scale-105 disabled:scale-100 w-full md:w-auto"
+                  >
+                      {isLoading ? t('generatingButton') : `${t('generateButton')} (${displayCount})`}
+                  </button>
+                  {error && <p className="mt-4 text-red-400 text-center animate-fade-in">{error}</p>}
+              </div>
+
             </div>
           </section>
         );
       case 'results':
         return (
-          <section className="animate-fade-in">
-              <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 text-slate-100">{t('generatedPortraitsTitle')}</h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
-                  {isLoading ? (
-                      Array.from({ length: displayCount }).map((_, index) => (
-                          <PolaroidCard key={index} status='loading' caption={t('generatingPlaceholder')} />
-                      ))
-                  ) : (
-                      generatedImages.map((src, index) => (
-                          <PolaroidCard 
-                              key={index} 
-                              status="done"
-                              imageUrl={src} 
-                              caption={`${t('generatedImage')} ${index + 1}`}
-                              onImageClick={handleImageClick}
-                              onDownload={() => handleDownloadImage(src)}
-                           />
-                      ))
-                  )}
-              </div>
-              <div className="mt-12 text-center">
-                <button
-                  onClick={() => setView('customize')}
-                  className="bg-slate-700 hover:bg-slate-600 border border-slate-600 text-slate-300 font-medium py-3 px-6 rounded-md transition-colors text-base"
-                >
-                  {t('backToCustomizeButton')}
-                </button>
-              </div>
+          <section className="w-full max-w-5xl mx-auto animate-fade-in">
+            <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center text-slate-100">{t('generatedPortraitsTitle')}</h2>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {isLoading && Array.from({ length: displayCount }).map((_, index) => (
+                <div key={index} className="animate-fade-in-up" style={{ animationDelay: `${index * 150}ms` }}>
+                  <PolaroidCard status='loading' caption={t('generatingPlaceholder')} />
+                </div>
+              ))}
+              
+              {!isLoading && error && (
+                <div className="sm:col-span-2 lg:col-span-3 text-center bg-red-900/50 border border-red-700 rounded-lg p-6">
+                  <h3 className="text-xl font-bold text-red-300 mb-2">{t('errorPrefix')}</h3>
+                  <p className="text-red-300">{error}</p>
+                </div>
+              )}
+
+              {!isLoading && generatedImages.map((src, index) => (
+                <div key={index} className="animate-fade-in-up" style={{ animationDelay: `${index * 150}ms` }}>
+                  <PolaroidCard
+                    status='done'
+                    imageUrl={src}
+                    caption={`${t('generatedImage')} #${index + 1}`}
+                    onImageClick={() => handleImageClick(src)}
+                    onDownload={() => handleDownloadImage(src)}
+                  />
+                </div>
+              ))}
+            </div>
+            
+            <div className="mt-12 text-center">
+              <button onClick={handleBackToCustomize} className="bg-slate-700 hover:bg-slate-600 text-slate-300 font-medium py-2 px-6 rounded-md transition-colors">
+                {t('backToCustomizeButton')}
+              </button>
+            </div>
           </section>
         );
     }
   };
 
   return (
-    <div className="relative min-h-screen bg-slate-900 text-slate-200 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="relative z-10 max-w-7xl mx-auto pb-20">
-        <div className="absolute top-0 right-0 pt-4 pr-4 sm:pt-6 sm:pr-6 z-20">
-            <button
-                onClick={toggleLanguage}
-                className="bg-slate-800/50 backdrop-blur-sm hover:bg-slate-700/60 border border-slate-700 text-slate-300 font-medium py-2 px-4 rounded-md transition-colors text-sm"
-            >
-                {language === 'en' ? 'Tiếng Việt' : 'English'}
-            </button>
+    <div className="min-h-screen bg-slate-900 text-slate-200 flex flex-col items-center p-4 sm:p-6 md:p-8 pb-20">
+      
+      {/* Header */}
+      <header className="text-center mb-8 md:mb-12 w-full animate-fade-in">
+        <div className="flex justify-center items-center gap-4">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold title-aurora">{t('mainTitle')}</h1>
+          <button onClick={toggleLanguage} className="bg-slate-800 border border-slate-700 rounded-md px-3 py-1 text-sm font-medium text-slate-300 hover:bg-slate-700 transition-colors">
+            {language === 'en' ? 'VI' : 'EN'}
+          </button>
         </div>
-        <header className="text-center mb-12 animate-fade-in-up">
-          <h1
-            className="text-6xl sm:text-7xl md:text-8xl font-bold tracking-tight py-2 font-['Parisienne',_cursive] title-aurora"
-          >
-            {t('mainTitle')}
-          </h1>
-          <p className="text-slate-400 tracking-widest mt-2 uppercase text-sm md:text-base">
-            {t('subtitle')}
-          </p>
-        </header>
+        <p className="text-slate-400 mt-2 text-base md:text-lg">{t('subtitle')}</p>
+      </header>
 
-        <main>
-          {renderContent()}
-        </main>
-        
-        {previewImageUrl && <ImagePreviewModal src={previewImageUrl} onClose={handleClosePreview} />}
-      </div>
+      {/* Main Content */}
+      <main className="w-full flex-grow flex items-start justify-center">
+        {renderContent()}
+      </main>
+
+      {/* Preview Modal */}
+      {previewImageUrl && <ImagePreviewModal src={previewImageUrl} onClose={handleClosePreview} />}
+
+      {/* Footer */}
       <Footer />
     </div>
   );
