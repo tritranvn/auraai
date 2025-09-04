@@ -1,7 +1,7 @@
 import { GoogleGenAI, Modality } from "@google/genai";
 import type { EditedImageResult } from '../types';
 
-// FIX: Switched from import.meta.env.VITE_API_KEY to process.env.API_KEY to align with coding guidelines and fix the TypeScript error.
+// Fix: Use process.env.API_KEY as mandated by the coding guidelines. This resolves the error on import.meta.env.
 const apiKey = process.env.API_KEY;
 
 if (!apiKey) {
